@@ -39,6 +39,7 @@ options:
   REMOVE_GAMMA: true
   PREFERS_COLOR_SCHEME: 'light'
   HA_BATTERY_WEBHOOK: ''
+  TIMEZONE: 'Europe/Vienna'
   SATURATION: 1
   CONTRAST: 1
   ADDITIONAL_ENV_VARS: []
@@ -61,6 +62,7 @@ schema:
   REMOVE_GAMMA: "bool?"
   PREFERS_COLOR_SCHEME: "list(light|dark)?"
   HA_BATTERY_WEBHOOK: "str?"
+  TIMEZONE: "str?"
   SATURATION: "int?"
   CONTRAST: "int?"
   ADDITIONAL_ENV_VARS:

@@ -290,6 +290,9 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
   try {
     page = await browser.newPage();
+    if (config.timezone) {
+      await page.emulateTimezone(config.timezone);
+    }
     await page.emulateMediaFeatures([
       {
         name: "prefers-color-scheme",

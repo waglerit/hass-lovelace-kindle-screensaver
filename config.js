@@ -72,6 +72,7 @@ module.exports = {
   renderingTimeout: process.env.RENDERING_TIMEOUT || haOptions.RENDERING_TIMEOUT || 10000,
   browserLaunchTimeout: process.env.BROWSER_LAUNCH_TIMEOUT || haOptions.BROWSER_LAUNCH_TIMEOUT || 30000,
   language: process.env.LANGUAGE || haOptions.LANGUAGE || "en",
+  timezone: process.env.TZ || haOptions.TZ || process.env.TIMEZONE || haOptions.TIMEZONE || null,
   debug: (process.env.DEBUG || haOptions.DEBUG) === "true",
   ignoreCertificateErrors:
     (process.env.UNSAFE_IGNORE_CERTIFICATE_ERRORS || haOptions.UNSAFE_IGNORE_CERTIFICATE_ERRORS) === "true",
