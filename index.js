@@ -80,6 +80,35 @@ const batteryStore = {};
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
     const url = new URL(request.url, `http://${request.headers.host}`);
+
+    // Live endpoint: generate a fresh screenshot and return it
+    if (url.pathname === "/live") {
+      try {
+        const pageNumber = parseInt(url.searchParams.get("page")) || 1;
+        const pageIndex = pageNumber - 1;
+        if (pageIndex < 0 || pageIndex >= config.pages.length) {
+          response.writeHead(400);
+          response.end("Invalid page number");
+          return;
+        }
+        console.log(`Live render requested for page ${pageNumber}...`);
+        await renderAndConvertAsync(browser);
+        const configPage = config.pages[pageIndex];
+        const outputPathWithExtension = configPage.outputPath + "." + configPage.imageFormat;
+        const data = await fs.readFile(outputPathWithExtension);
+        response.writeHead(200, {
+          "Content-Type": "image/" + configPage.imageFormat,
+          "Content-Length": Buffer.byteLength(data)
+        });
+        response.end(data);
+      } catch (e) {
+        console.error(e);
+        response.writeHead(500);
+        response.end("Error generating live screenshot");
+      }
+      return;
+    }
+
     // Check the page number
     const pageNumberStr = url.pathname;
     // and get the battery level, if any
