@@ -1,12 +1,12 @@
 {
-  "name": "hass-lovelace-kindle-screensaver",
-  "version": "1.0.15",
+  "name": "hass-lovelace-kindle-screensaver-fork",
+  "version": "1.0.16",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "author": "sibbl",
+  "author": "gerhard",
   "license": "MIT",
   "dependencies": {
     "cron": "^1.8.2",
