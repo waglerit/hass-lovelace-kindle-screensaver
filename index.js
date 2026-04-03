@@ -12,6 +12,34 @@ const gm = require("gm");
 const batteryStore = {};
 
 (async () => {
+  // Try to set timezone from HA supervisor API
+  if (!process.env.TZ && process.env.SUPERVISOR_TOKEN) {
+    try {
+      const tzResponse = await new Promise((resolve, reject) => {
+        const req = http.get("http://supervisor/info", {
+          headers: { Authorization: `Bearer ${process.env.SUPERVISOR_TOKEN}` }
+        }, (res) => {
+          let data = "";
+          res.on("data", (chunk) => data += chunk);
+          res.on("end", () => resolve(JSON.parse(data)));
+        });
+        req.on("error", reject);
+        req.setTimeout(5000, () => { req.destroy(); reject(new Error("timeout")); });
+      });
+      if (tzResponse.data && tzResponse.data.timezone) {
+        process.env.TZ = tzResponse.data.timezone;
+        console.log(`Timezone set to ${process.env.TZ} from HA supervisor`);
+      }
+    } catch (e) {
+      console.warn("Could not get timezone from supervisor:", e.message);
+    }
+  }
+  if (process.env.TZ) {
+    console.log(`Using timezone: ${process.env.TZ}`);
+  } else {
+    console.warn("No timezone set, using UTC");
+  }
+
   if (config.pages.length === 0) {
     return console.error("Please check your configuration");
   }
