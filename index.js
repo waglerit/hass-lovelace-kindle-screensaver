@@ -12,9 +12,8 @@ const gm = require("gm");
 const batteryStore = {};
 
 (async () => {
-  // Resolve timezone: HA supervisor API > config > fallback
-  let timezone = config.timezone;
-  if (!timezone && process.env.SUPERVISOR_TOKEN) {
+  // Resolve timezone: config/env (set early in config.js) > HA supervisor API > fallback
+  if (!process.env.TZ && process.env.SUPERVISOR_TOKEN) {
     try {
       const haConfig = await new Promise((resolve, reject) => {
         const req = http.get("http://supervisor/core/api/config", {
@@ -30,19 +29,17 @@ const batteryStore = {};
         req.setTimeout(5000, () => { req.destroy(); reject(new Error("timeout")); });
       });
       if (haConfig.time_zone) {
-        timezone = haConfig.time_zone;
-        console.log(`Timezone from HA core config: ${timezone}`);
+        process.env.TZ = haConfig.time_zone;
+        config.timezone = haConfig.time_zone;
+        console.log(`Timezone from HA core API: ${haConfig.time_zone}`);
       }
     } catch (e) {
       console.warn("Could not get timezone from HA supervisor:", e.message);
     }
   }
-  if (timezone) {
-    process.env.TZ = timezone;
-    config.timezone = timezone;
-    console.log(`Using timezone: ${timezone}`);
-  } else {
-    console.warn("No timezone configured, browser will use UTC. Set TIMEZONE in add-on config.");
+  console.log(`Container time: ${new Date().toString()}`);
+  if (!process.env.TZ) {
+    console.warn("WARNING: No timezone set! Times will be UTC. Set TIMEZONE in add-on config.");
   }
 
   if (config.pages.length === 0) {

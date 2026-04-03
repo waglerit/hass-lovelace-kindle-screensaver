@@ -13,6 +13,13 @@ try {
   console.warn("Failed to read /data/options.json:", e.message);
 }
 
+// Set TZ early so Node.js AND child processes (Chromium) inherit it
+const resolvedTZ = process.env.TZ || haOptions.TZ || process.env.TIMEZONE || haOptions.TIMEZONE;
+if (resolvedTZ) {
+  process.env.TZ = resolvedTZ;
+  console.log(`TZ set to ${resolvedTZ} (container + Chromium will use this)`);
+}
+
 function getEnvironmentVariable(key, suffix, fallbackValue) {
   const value = process.env[key + suffix];
   if (value !== undefined) return value;
