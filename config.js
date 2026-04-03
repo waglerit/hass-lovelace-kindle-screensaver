@@ -1,7 +1,27 @@
+const fs = require("fs");
+const path = require("path");
+
+// Load HA add-on options from /data/options.json if available
+let haOptions = {};
+const optionsPath = "/data/options.json";
+try {
+  if (fs.existsSync(optionsPath)) {
+    haOptions = JSON.parse(fs.readFileSync(optionsPath, "utf8"));
+    console.log("Loaded HA add-on options from /data/options.json");
+  }
+} catch (e) {
+  console.warn("Failed to read /data/options.json:", e.message);
+}
+
 function getEnvironmentVariable(key, suffix, fallbackValue) {
   const value = process.env[key + suffix];
   if (value !== undefined) return value;
-  return fallbackValue || process.env[key];
+  // Fall back to HA add-on options
+  const haValue = haOptions[key + suffix];
+  if (haValue !== undefined) return String(haValue);
+  if (fallbackValue !== undefined) return fallbackValue;
+  // Fall back to base key from env, then HA options
+  return process.env[key] || (haOptions[key] !== undefined ? String(haOptions[key]) : undefined);
 }
 
 function getPagesConfig() {
@@ -9,7 +29,7 @@ function getPagesConfig() {
   let i = 0;
   while (++i) {
     const suffix = i === 1 ? "" : `_${i}`;
-    const screenShotUrl = process.env[`HA_SCREENSHOT_URL${suffix}`];
+    const screenShotUrl = process.env[`HA_SCREENSHOT_URL${suffix}`] || haOptions[`HA_SCREENSHOT_URL${suffix}`];
     if (!screenShotUrl) return pages;
     pages.push({
       screenShotUrl,
@@ -43,16 +63,16 @@ function getPagesConfig() {
 }
 
 module.exports = {
-  baseUrl: process.env.HA_BASE_URL,
-  accessToken: process.env.HA_ACCESS_TOKEN,
-  cronJob: process.env.CRON_JOB || "* * * * *",
-  useImageMagick: process.env.USE_IMAGE_MAGICK === "true",
+  baseUrl: process.env.HA_BASE_URL || haOptions.HA_BASE_URL,
+  accessToken: process.env.HA_ACCESS_TOKEN || haOptions.HA_ACCESS_TOKEN,
+  cronJob: process.env.CRON_JOB || haOptions.CRON_JOB || "* * * * *",
+  useImageMagick: (process.env.USE_IMAGE_MAGICK || haOptions.USE_IMAGE_MAGICK) === "true",
   pages: getPagesConfig(),
-  port: process.env.PORT || 5000,
-  renderingTimeout: process.env.RENDERING_TIMEOUT || 10000,
-  browserLaunchTimeout: process.env.BROWSER_LAUNCH_TIMEOUT || 30000,
-  language: process.env.LANGUAGE || "en",
-  debug: process.env.DEBUG === "true",
+  port: process.env.PORT || haOptions.PORT || 5000,
+  renderingTimeout: process.env.RENDERING_TIMEOUT || haOptions.RENDERING_TIMEOUT || 10000,
+  browserLaunchTimeout: process.env.BROWSER_LAUNCH_TIMEOUT || haOptions.BROWSER_LAUNCH_TIMEOUT || 30000,
+  language: process.env.LANGUAGE || haOptions.LANGUAGE || "en",
+  debug: (process.env.DEBUG || haOptions.DEBUG) === "true",
   ignoreCertificateErrors:
-    process.env.UNSAFE_IGNORE_CERTIFICATE_ERRORS === "true",
+    (process.env.UNSAFE_IGNORE_CERTIFICATE_ERRORS || haOptions.UNSAFE_IGNORE_CERTIFICATE_ERRORS) === "true",
 };
