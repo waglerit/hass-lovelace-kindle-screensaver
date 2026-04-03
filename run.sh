@@ -32,6 +32,8 @@ for var in $(bashio::config 'ADDITIONAL_ENV_VARS|keys'); do
 done
 
 bashio::log.info "Using HA_BASE_URL: ${HA_BASE_URL}"
+bashio::log.info "Using HA_SCREENSHOT_URL: ${HA_SCREENSHOT_URL}"
+bashio::log.info "HA_ACCESS_TOKEN set: $([ -n "${HA_ACCESS_TOKEN}" ] && echo 'yes' || echo 'no')"
 
 bashio::log.info "Starting server..."
 
