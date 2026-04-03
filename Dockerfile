@@ -25,7 +25,9 @@ COPY local.conf /etc/fonts/local.conf
 RUN npm ci
 
 COPY *.js ./
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["./entrypoint.sh"]
