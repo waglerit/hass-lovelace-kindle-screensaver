@@ -12,32 +12,37 @@ const gm = require("gm");
 const batteryStore = {};
 
 (async () => {
-  // Try to set timezone from HA supervisor API
-  if (!process.env.TZ && process.env.SUPERVISOR_TOKEN) {
+  // Resolve timezone: HA supervisor API > config > fallback
+  let timezone = config.timezone;
+  if (!timezone && process.env.SUPERVISOR_TOKEN) {
     try {
-      const tzResponse = await new Promise((resolve, reject) => {
-        const req = http.get("http://supervisor/info", {
+      const haConfig = await new Promise((resolve, reject) => {
+        const req = http.get("http://supervisor/core/api/config", {
           headers: { Authorization: `Bearer ${process.env.SUPERVISOR_TOKEN}` }
         }, (res) => {
           let data = "";
           res.on("data", (chunk) => data += chunk);
-          res.on("end", () => resolve(JSON.parse(data)));
+          res.on("end", () => {
+            try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+          });
         });
         req.on("error", reject);
         req.setTimeout(5000, () => { req.destroy(); reject(new Error("timeout")); });
       });
-      if (tzResponse.data && tzResponse.data.timezone) {
-        process.env.TZ = tzResponse.data.timezone;
-        console.log(`Timezone set to ${process.env.TZ} from HA supervisor`);
+      if (haConfig.time_zone) {
+        timezone = haConfig.time_zone;
+        console.log(`Timezone from HA core config: ${timezone}`);
       }
     } catch (e) {
-      console.warn("Could not get timezone from supervisor:", e.message);
+      console.warn("Could not get timezone from HA supervisor:", e.message);
     }
   }
-  if (process.env.TZ) {
-    console.log(`Using timezone: ${process.env.TZ}`);
+  if (timezone) {
+    process.env.TZ = timezone;
+    config.timezone = timezone;
+    console.log(`Using timezone: ${timezone}`);
   } else {
-    console.warn("No timezone set, using UTC");
+    console.warn("No timezone configured, browser will use UTC. Set TIMEZONE in add-on config.");
   }
 
   if (config.pages.length === 0) {
@@ -291,6 +296,7 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   try {
     page = await browser.newPage();
     if (config.timezone) {
+      console.log(`Emulating timezone: ${config.timezone}`);
       await page.emulateTimezone(config.timezone);
     }
     await page.emulateMediaFeatures([
